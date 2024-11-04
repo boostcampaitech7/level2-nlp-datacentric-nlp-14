@@ -120,7 +120,7 @@ def predict(model: AutoModelForSequenceClassification, tokenizer: AutoTokenizer)
     model.eval()
     preds = []
 
-    for idx, sample in tqdm(dataset_test.iterrows(), total=len(dataset_test), desc="Evaluating"):
+    for idx, sample in tqdm(dataset_test.iterrows(), total=len(dataset_test), desc="Predicting"):
         inputs = tokenizer(sample["text"], return_tensors="pt").to(DEVICE)
         with torch.no_grad():
             logits = model(**inputs).logits
