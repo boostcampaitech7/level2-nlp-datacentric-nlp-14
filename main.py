@@ -53,9 +53,7 @@ class BERTDataset(Dataset):
         return len(self.labels)
 
 
-def train(model: AutoModelForSequenceClassification, tokenizer: AutoTokenizer):
-
-    data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
+def train(data: pd.DataFrame, model: AutoModelForSequenceClassification, tokenizer: AutoTokenizer):
     dataset_train, dataset_valid = train_test_split(data, test_size=0.3, random_state=SEED)
 
     data_train = BERTDataset(dataset_train, tokenizer)
@@ -130,12 +128,24 @@ def predict(model: AutoModelForSequenceClassification, tokenizer: AutoTokenizer)
     dataset_test.to_csv(os.path.join(DATA_DIR, "output.csv"), index=False)
 
 
-if __name__ == "__main__":
-    set_seed()
+def main(data: pd.DataFrame):
+    """
+    주어진 DataFrame `data`는 분류 작업에 필요한 `text`와 `target` 열을 포함해야 합니다.
 
+    - `text`: 분류할 자연어 문자열을 담고 있습니다.
+    - `target`: 0에서 6 사이의 정수로 이루어진 라벨입니다.
+
+    `text`는 모델의 입력으로 사용되며, `target`은 해당 `text`의 분류 라벨로 사용됩니다.
+    """
     model_name = "klue/bert-base"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=7).to(DEVICE)
 
-    train(model, tokenizer)
+    train(data, model, tokenizer)
     predict(model, tokenizer)
+
+
+if __name__ == "__main__":
+    set_seed()
+    data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
+    main(data)
