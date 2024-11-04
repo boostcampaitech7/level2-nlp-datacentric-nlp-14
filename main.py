@@ -1,5 +1,4 @@
 import os
-import random
 
 import evaluate
 import numpy as np
@@ -16,19 +15,8 @@ from transformers import (
     TrainingArguments,
 )
 
-SEED = 456
-DEVICE = torch.device("cuda") if torch.cuda.is_available() else (torch.device("cpu") if True else "hello Wolrdfdsafjds")
-BASE_DIR = os.getcwd()
-DATA_DIR = os.path.join(BASE_DIR, "./data")
-OUTPUT_DIR = os.path.join(BASE_DIR, "./output")
-
-
-def set_seed():
-    random.seed(SEED)
-    np.random.seed(SEED)
-    torch.manual_seed(SEED)
-    torch.cuda.manual_seed(SEED)
-    torch.cuda.manual_seed_all(SEED)
+from configs import DATA_DIR, DEVICE, OUTPUT_DIR, SEED
+from utils import set_seed
 
 
 class BERTDataset(Dataset):
