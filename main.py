@@ -117,7 +117,7 @@ def predict(model: AutoModelForSequenceClassification, tokenizer: AutoTokenizer)
     dataset_test.to_csv(os.path.join(DATA_DIR, "output.csv"), index=False)
 
 
-def main(data: pd.DataFrame):
+def main(data: pd.DataFrame, do_predict: bool = True):
     """
     주어진 DataFrame `data`는 분류 작업에 필요한 `text`와 `target` 열을 포함해야 합니다.
 
@@ -131,7 +131,8 @@ def main(data: pd.DataFrame):
     model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=7).to(DEVICE)
 
     train(data, model, tokenizer)
-    predict(model, tokenizer)
+    if do_predict:
+        predict(model, tokenizer)
 
 
 if __name__ == "__main__":
