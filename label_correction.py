@@ -17,4 +17,5 @@ if __name__ == "__main__":
     set_seed()
     data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
     corrected_data = correct_label_errors(data)
+    corrected_data.to_csv(os.path.join(DATA_DIR, "label_corrected_train.csv"), index=False)
     main(corrected_data, do_predict=False)
