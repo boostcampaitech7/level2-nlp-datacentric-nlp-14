@@ -5,9 +5,12 @@ from kiwipiepy import Kiwi
 
 from configs import DATA_DIR
 
+# Kiwi 형태소 분석기 초기화
+kiwi = Kiwi()
+
 
 # 노이즈 여부를 판별하는 함수 정의
-def noise_check(text):
+def noise_check(text: str):
 
     tokens = kiwi.tokenize(text)
 
@@ -34,22 +37,21 @@ def noise_check(text):
     return noise_ratio
 
 
-if __name__ == "__main__":
+def noise_labeling(data: pd.DataFrame):
 
-    # Kiwi 형태소 분석기 초기화
-    kiwi = Kiwi()
+    data_train = data.copy()
+
+    data_train["noise_ratio"] = data_train["text"].apply(noise_check)
+
+    data_train["noise_label"] = data_train["noise_ratio"] >= 0.2
+
+    return data_train
+
+
+if __name__ == "__main__":
 
     train_df = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
 
-    train_df["noise_ratio"] = train_df["text"].apply(noise_check)
+    noise_label_data = noise_labeling(train_df)
 
-    noisy_data = train_df[train_df["noise_ratio"] >= 0.2]
-    normal_data = train_df[train_df["noise_ratio"] < 0.2]
-
-    # 결과 출력
-    print("Noisy Data:")
-    print(noisy_data.info())
-    print("\nNormal Data:")
-    print(normal_data.info())
-
-    train_df.to_csv(os.path.join(DATA_DIR, "train_with_noise_ratio.csv"), index=False)
+    noise_label_data.to_csv(os.path.join(DATA_DIR, "train_with_noise_ratio_1.csv"), index=False)
