@@ -75,12 +75,10 @@ def train(model: AutoModelForSequenceClassification, tokenizer: AutoTokenizer):
         do_train=True,
         do_eval=True,
         do_predict=True,
-        logging_strategy="steps",
-        eval_strategy="steps",
-        save_strategy="steps",
+        logging_strategy="no",
+        eval_strategy="no",
+        save_strategy="no",
         logging_steps=100,
-        eval_steps=100,
-        save_steps=100,
         save_total_limit=2,
         learning_rate=2e-05,
         adam_beta1=0.9,
@@ -105,7 +103,16 @@ def train(model: AutoModelForSequenceClassification, tokenizer: AutoTokenizer):
         data_collator=data_collator,
         compute_metrics=compute_metrics,
     )
-    trainer.train()
+    train_results = trainer.train()
+    eval_results = trainer.evaluate()
+    trainer.save_model(OUTPUT_DIR)
+
+    print("Training Summary")
+    print("-" * 30)
+    print(f"{'Train Data Count':20} : {len(data_train)}")
+    print(f"{'Train Loss':20} : {train_results.training_loss:.4f}")
+    print(f"{'Eval Loss':20} : {eval_results['eval_loss']:.4f}")
+    print(f"{'Eval F1':20} : {eval_results['eval_f1']:.4f}")
 
 
 def predict(model: AutoModelForSequenceClassification, tokenizer: AutoTokenizer):
