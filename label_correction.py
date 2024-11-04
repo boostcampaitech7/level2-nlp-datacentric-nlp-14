@@ -9,7 +9,7 @@ from utils import set_seed
 
 def correct_label_errors(data: pd.DataFrame):
     # TODO: Do Something
-    corrected_data = data
+    corrected_data = data.copy()
     return corrected_data
 
 
