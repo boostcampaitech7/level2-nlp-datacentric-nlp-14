@@ -17,7 +17,7 @@ def inference_category(pipe: Pipeline, sentences: list[str], selected_categories
         {
             "role": "system",
             "content": "Please analyze the given list of text snippets and identify the most suitable topic.\n"
-            "- It should be a wide range of topics that can be used as a major category of news\n"
+            "- It should be a wide range of topics that can be used as a major category of news.\n"
             f"- You must select except for this list that has already been selected. {selected_categories}\n"
             "- Answer in korean single word.",
         },
@@ -47,8 +47,22 @@ def compare_categories(pipe: Pipeline, sentences1: list[str], sentences2: list[s
     return pipe(text, return_full_text=False)[0]["generated_text"] == "1"
 
 
-def inference_new_category(pipe: Pipeline, data: pd.DataFrame, categories: list[str], old_category: str) -> str:
-    pass
+def inference_new_category(pipe: Pipeline, sentences: list[str], categories: list[str], old_category: str) -> str:
+    prompt = "\n".join([f"{i + 1}. {sentence}\n" for i, sentence in enumerate(sentences)])
+
+    messages = [
+        {
+            "role": "system",
+            "content": "Please analyze the given list of text snippets and identify the most suitable topic.\n"
+            "- Select a plausible topic that has not been chosen yet.\n"
+            f"- Avoid categories already selected: {set(categories)}.\n"
+            f"- Your answer **must not be '{old_category}**'.\n"
+            "- Answer in a single Korean word that summarizes the overall theme of the snippets.",
+        },
+        {"role": "user", "content": prompt},
+    ]
+    text = pipe.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    return pipe(text, return_full_text=False)[0]["generated_text"]
 
 
 def label_category(data: pd.DataFrame) -> pd.DataFrame:
@@ -84,8 +98,10 @@ def label_category(data: pd.DataFrame) -> pd.DataFrame:
             limited_s2 = s2[:10]
             if compare_categories(pipe, limited_s1, limited_s2, categories[i]):
                 categories[j] = inference_new_category(pipe, s2, categories, categories[i])
+                print(f"{j}번째 카테고리를 {categories[j]}로 변경합니다.")
             else:
                 categories[i] = inference_new_category(pipe, s2, categories, categories[i])
+                print(f"{i}번째 카테고리를 {categories[i]}로 변경합니다.")
 
     corrected_data = data.copy()
     corrected_data["category"] = corrected_data["target"].apply(lambda x: categories[x])
