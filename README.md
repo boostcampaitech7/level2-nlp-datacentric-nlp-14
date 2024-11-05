@@ -1,12 +1,20 @@
 # Data Centric NLP project
 
+데이터의 오류(`noise`, `miss-label` 등)을 검사하고, 수정하여 모델의 성능을 높입니다.
+
 ## Getting Started
 
-`pipenv sync` 명령어를 통해 Pipfile.lock의 환경을 동일하게 구축합니다.
+## Requirement
+
+- Python: 3.10
+
+## Create Virtual Environment with Pipenv
+
+`pipenv install` 명령어를 통해 필요한 패키지들을 받습니다.
 
 ```shell
 $ pip install pipenv
-$ pipenv sync
+$ pipenv install
 ```
 
 `pipenv` 가상환경에 진입합니다.
