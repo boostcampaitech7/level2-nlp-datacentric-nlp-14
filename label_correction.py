@@ -47,7 +47,7 @@ def label_category(data: pd.DataFrame) -> pd.DataFrame:
                 categories[j] = inference_new_category(pipe, s2, categories, categories[i])
                 print(f"{j}번째 카테고리를 {categories[j]}로 변경합니다.")
             else:
-                categories[i] = inference_new_category(pipe, s2, categories, categories[i])
+                categories[i] = inference_new_category(pipe, s1, categories, categories[i])
                 print(f"{i}번째 카테고리를 {categories[i]}로 변경합니다.")
 
     corrected_data = data.copy()
