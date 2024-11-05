@@ -62,10 +62,12 @@ def inference_category(pipe: Pipeline, sentences: list[str], selected_categories
     messages = [
         {
             "role": "system",
-            "content": "Please analyze the given list of text snippets and identify the most suitable topic.\n"
-            "- It should be a wide range of topics that can be used as a major category of news.\n"
-            f"- You must select except for this list that has already been selected. {selected_categories}\n"
-            "- Answer in korean single word.",
+            "content": (
+                "Please analyze the given list of text snippets and identify the most suitable topic.\n"
+                "- It should be a wide range of topics that can be used as a major category of news.\n"
+                f"- You must select except for this list that has already been selected. {selected_categories}\n"
+                "- Answer in korean single word."
+            ),
         },
         {"role": "user", "content": prompt},
     ]
@@ -83,9 +85,11 @@ def compare_categories(pipe: Pipeline, sentences1: list[str], sentences2: list[s
     messages = [
         {
             "role": "system",
-            "content": "Please analyze the following two lists of text snippets "
-            f"and select the one that is more suitable for the category {category}.\n"
-            "- Answer in single number.",
+            "content": (
+                "Please analyze the following two lists of text snippets "
+                f"and select the one that is more suitable for the category {category}.\n"
+                "- Answer in single number."
+            ),
         },
         {"role": "user", "content": f"Sentence 1:\n{s1_prompt}\n\nSentence 2:\n{s2_prompt}"},
     ]
@@ -99,11 +103,13 @@ def inference_new_category(pipe: Pipeline, sentences: list[str], categories: lis
     messages = [
         {
             "role": "system",
-            "content": "Please analyze the given list of text snippets and identify the most suitable topic.\n"
-            "- Select a plausible topic that has not been chosen yet.\n"
-            f"- Avoid categories already selected: {set(categories)}.\n"
-            f"- Your answer **must not be '{old_category}**'.\n"
-            "- Answer in a single Korean word that summarizes the overall theme of the snippets.",
+            "content": (
+                "Please analyze the given list of text snippets and identify the most suitable topic.\n"
+                "- Select a plausible topic that has not been chosen yet.\n"
+                f"- Avoid categories already selected: {set(categories)}.\n"
+                f"- Your answer **must not be '{old_category}**'.\n"
+                "- Answer in a single Korean word that summarizes the overall theme of the snippets."
+            ),
         },
         {"role": "user", "content": prompt},
     ]
