@@ -28,10 +28,6 @@ def label_category(data: pd.DataFrame) -> pd.DataFrame:
         tokenizer=AutoTokenizer.from_pretrained(model_name),
         max_new_tokens=128,
         device=DEVICE,
-        do_sample=False,
-        temperature=None,
-        top_p=None,
-        top_k=None,
     )
 
     for i in range(7):
@@ -87,7 +83,7 @@ def compare_categories(pipe: Pipeline, sentences1: list[str], sentences2: list[s
     messages = [
         {
             "role": "system",
-            "content": "Please analyze the following two lists of text snippets"
+            "content": "Please analyze the following two lists of text snippets "
             f"and select the one that is more suitable for the category {category}.\n"
             "- Answer in single number.",
         },
