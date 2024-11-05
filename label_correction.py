@@ -1,4 +1,5 @@
 import os
+from itertools import combinations
 
 import pandas as pd
 from transformers import AutoModelForCausalLM, AutoTokenizer, Pipeline, pipeline
@@ -10,9 +11,7 @@ from utils import set_seed
 
 
 def inference_category(pipe: Pipeline, sentences: list[str], selected_categories: list[str]) -> str:
-    prompt = ""
-    for i, sentence in enumerate(sentences):
-        prompt += f"{i + 1}. {sentence}\n"
+    prompt = "\n".join([f"{i + 1}. {sentence}\n" for i, sentence in enumerate(sentences)])
 
     messages = [
         {
@@ -25,8 +24,31 @@ def inference_category(pipe: Pipeline, sentences: list[str], selected_categories
         {"role": "user", "content": prompt},
     ]
     text = pipe.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-
     return pipe(text, return_full_text=False)[0]["generated_text"]
+
+
+def compare_categories(pipe: Pipeline, sentences1: list[str], sentences2: list[str], category: str) -> bool:
+    """
+    sentence1이 sentence2 보다 더 category에 적합하다면 True, 아니면 False를 반환합니다.
+    """
+    s1_prompt = "\n".join([f"{sentence}\n" for i, sentence in enumerate(sentences1)])
+    s2_prompt = "\n".join([f"{sentence}\n" for i, sentence in enumerate(sentences2)])
+
+    messages = [
+        {
+            "role": "system",
+            "content": "Please analyze the following two lists of text snippets"
+            f"and select the one that is more suitable for the category {category}.\n"
+            "- Answer in single number.",
+        },
+        {"role": "user", "content": f"Sentence 1:\n{s1_prompt}\n\nSentence 2:\n{s2_prompt}"},
+    ]
+    text = pipe.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    return pipe(text, return_full_text=False)[0]["generated_text"] == "1"
+
+
+def inference_new_category(pipe: Pipeline, data: pd.DataFrame, categories: list[str], old_category: str) -> str:
+    pass
 
 
 def label_category(data: pd.DataFrame) -> pd.DataFrame:
@@ -39,8 +61,12 @@ def label_category(data: pd.DataFrame) -> pd.DataFrame:
         "text-generation",
         model=AutoModelForCausalLM.from_pretrained(model_name),
         tokenizer=AutoTokenizer.from_pretrained(model_name),
-        max_new_tokens=512,
+        max_new_tokens=128,
         device=DEVICE,
+        do_sample=False,
+        temperature=None,
+        top_p=None,
+        top_k=None,
     )
 
     for i in range(7):
@@ -48,6 +74,18 @@ def label_category(data: pd.DataFrame) -> pd.DataFrame:
         response = inference_category(pipe, selected_label_data["restored"].tolist(), categories)
         categories.append(response)
         print(f"{i}번째 카테고리: {response}")
+
+    for i, j in combinations(range(7), 2):
+        if categories[i] == categories[j]:
+            print(f"{i}번째 카테고리와 {j}번째 카테고리가 같습니다.")
+            s1 = small_noised_correct_label_data[small_noised_correct_label_data["target"] == i]["restored"].tolist()
+            limited_s1 = s1[:10]
+            s2 = small_noised_correct_label_data[small_noised_correct_label_data["target"] == j]["restored"].tolist()
+            limited_s2 = s2[:10]
+            if compare_categories(pipe, limited_s1, limited_s2, categories[i]):
+                categories[j] = inference_new_category(pipe, s2, categories, categories[i])
+            else:
+                categories[i] = inference_new_category(pipe, s2, categories, categories[i])
 
     corrected_data = data.copy()
     corrected_data["category"] = corrected_data["target"].apply(lambda x: categories[x])
