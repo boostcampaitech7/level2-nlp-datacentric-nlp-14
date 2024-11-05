@@ -10,6 +10,56 @@ from noise_data_filter import noise_labeling
 from utils import set_seed
 
 
+def correct_label_errors(data: pd.DataFrame):
+    # TODO: Do Something
+    corrected_data = data.copy()
+    return corrected_data
+
+
+def label_category(data: pd.DataFrame) -> pd.DataFrame:
+    small_noised_correct_label_data = data[(data["noise_label"]) & (data["noise_ratio"] <= 0.35)]
+
+    categories = []
+
+    model_name = "Qwen/Qwen2.5-7B-Instruct"
+    pipe = pipeline(
+        "text-generation",
+        model=AutoModelForCausalLM.from_pretrained(model_name),
+        tokenizer=AutoTokenizer.from_pretrained(model_name),
+        max_new_tokens=128,
+        device=DEVICE,
+        do_sample=False,
+        temperature=None,
+        top_p=None,
+        top_k=None,
+    )
+
+    for i in range(7):
+        selected_label_data = small_noised_correct_label_data[small_noised_correct_label_data["target"] == i]
+        response = inference_category(pipe, selected_label_data["restored"].tolist(), categories)
+        categories.append(response)
+        print(f"{i}번째 카테고리: {response}")
+
+    for i, j in combinations(range(7), 2):
+        if categories[i] == categories[j]:
+            print(f"{i}번째 카테고리와 {j}번째 카테고리가 같습니다.")
+            s1 = small_noised_correct_label_data[small_noised_correct_label_data["target"] == i]["restored"].tolist()
+            limited_s1 = s1[:10]
+            s2 = small_noised_correct_label_data[small_noised_correct_label_data["target"] == j]["restored"].tolist()
+            limited_s2 = s2[:10]
+            if compare_categories(pipe, limited_s1, limited_s2, categories[i]):
+                categories[j] = inference_new_category(pipe, s2, categories, categories[i])
+                print(f"{j}번째 카테고리를 {categories[j]}로 변경합니다.")
+            else:
+                categories[i] = inference_new_category(pipe, s2, categories, categories[i])
+                print(f"{i}번째 카테고리를 {categories[i]}로 변경합니다.")
+
+    corrected_data = data.copy()
+    corrected_data["category"] = corrected_data["target"].apply(lambda x: categories[x])
+
+    return corrected_data
+
+
 def inference_category(pipe: Pipeline, sentences: list[str], selected_categories: list[str]) -> str:
     prompt = "\n".join([f"{i + 1}. {sentence}\n" for i, sentence in enumerate(sentences)])
 
@@ -63,56 +113,6 @@ def inference_new_category(pipe: Pipeline, sentences: list[str], categories: lis
     ]
     text = pipe.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
     return pipe(text, return_full_text=False)[0]["generated_text"]
-
-
-def label_category(data: pd.DataFrame) -> pd.DataFrame:
-    small_noised_correct_label_data = data[(data["noise_label"]) & (data["noise_ratio"] <= 0.35)]
-
-    categories = []
-
-    model_name = "Qwen/Qwen2.5-7B-Instruct"
-    pipe = pipeline(
-        "text-generation",
-        model=AutoModelForCausalLM.from_pretrained(model_name),
-        tokenizer=AutoTokenizer.from_pretrained(model_name),
-        max_new_tokens=128,
-        device=DEVICE,
-        do_sample=False,
-        temperature=None,
-        top_p=None,
-        top_k=None,
-    )
-
-    for i in range(7):
-        selected_label_data = small_noised_correct_label_data[small_noised_correct_label_data["target"] == i]
-        response = inference_category(pipe, selected_label_data["restored"].tolist(), categories)
-        categories.append(response)
-        print(f"{i}번째 카테고리: {response}")
-
-    for i, j in combinations(range(7), 2):
-        if categories[i] == categories[j]:
-            print(f"{i}번째 카테고리와 {j}번째 카테고리가 같습니다.")
-            s1 = small_noised_correct_label_data[small_noised_correct_label_data["target"] == i]["restored"].tolist()
-            limited_s1 = s1[:10]
-            s2 = small_noised_correct_label_data[small_noised_correct_label_data["target"] == j]["restored"].tolist()
-            limited_s2 = s2[:10]
-            if compare_categories(pipe, limited_s1, limited_s2, categories[i]):
-                categories[j] = inference_new_category(pipe, s2, categories, categories[i])
-                print(f"{j}번째 카테고리를 {categories[j]}로 변경합니다.")
-            else:
-                categories[i] = inference_new_category(pipe, s2, categories, categories[i])
-                print(f"{i}번째 카테고리를 {categories[i]}로 변경합니다.")
-
-    corrected_data = data.copy()
-    corrected_data["category"] = corrected_data["target"].apply(lambda x: categories[x])
-
-    return corrected_data
-
-
-def correct_label_errors(data: pd.DataFrame):
-    # TODO: Do Something
-    corrected_data = data.copy()
-    return corrected_data
 
 
 if __name__ == "__main__":
