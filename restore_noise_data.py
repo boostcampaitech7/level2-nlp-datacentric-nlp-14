@@ -1,12 +1,14 @@
-import random
-import torch
-import pandas as pd
-import re
 import os
-from transformers import AutoTokenizer, AutoModelForCausalLM
+import random
+import re
+
+import pandas as pd
+import torch
 from tqdm import tqdm
-from utils import set_seed
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 from configs import DATA_DIR
+from utils import set_seed
 
 # 시드 고정
 set_seed()
