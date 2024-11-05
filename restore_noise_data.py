@@ -146,7 +146,7 @@ You are a title data restorer. Learn how to restore data through given examples.
     instruction = "주어진 real_problem을 네이버 기사 제목 형태로 복원하세요"
 
     # 복원된 문장 생성
-    restored_data = generate_restored_sentences(data, examples, Black[:4], tokenizer, model, Prompt, instruction)
+    restored_data = generate_restored_sentences(data, examples, Black, tokenizer, model, Prompt, instruction)
 
     # 결과 저장
     restored_data.to_csv(os.path.join(DATA_DIR, "restored_train.csv"), index=False)
