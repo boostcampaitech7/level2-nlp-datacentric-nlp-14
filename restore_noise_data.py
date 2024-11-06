@@ -1,7 +1,7 @@
 import os
 import random
 import re
-from typing import List, Tuple, Dict
+from typing import Dict, List, Tuple
 
 import pandas as pd
 import torch
