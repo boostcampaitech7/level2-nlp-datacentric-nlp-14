@@ -10,16 +10,7 @@ from noise_data_filter import noise_labeling
 from utils import set_seed
 
 
-def correct_label_errors(data: pd.DataFrame):
-    # TODO: Do Something
-    corrected_data = data.copy()
-    return corrected_data
-
-
-def label_category(data: pd.DataFrame) -> pd.DataFrame:
-    small_noised_correct_label_data = data[(data["noise_label"]) & (data["noise_ratio"] <= 0.35)]
-
-    categories = []
+def correct_label_errors(data: pd.DataFrame) -> pd.DataFrame:
 
     model_name = "Qwen/Qwen2.5-7B-Instruct"
     pipe = pipeline(
@@ -29,6 +20,16 @@ def label_category(data: pd.DataFrame) -> pd.DataFrame:
         max_new_tokens=128,
         device=DEVICE,
     )
+
+    category_named_data, category_map = label_category(pipe, data)
+
+    return category_named_data
+
+
+def label_category(pipe: Pipeline, data: pd.DataFrame) -> tuple[pd.DataFrame, dict[int, str]]:
+    small_noised_correct_label_data = data[(data["noise_label"]) & (data["noise_ratio"] <= 0.35)]
+
+    categories = []
 
     for i in range(7):
         selected_label_data = small_noised_correct_label_data[small_noised_correct_label_data["target"] == i]
@@ -53,7 +54,7 @@ def label_category(data: pd.DataFrame) -> pd.DataFrame:
     corrected_data = data.copy()
     corrected_data["category"] = corrected_data["target"].apply(lambda x: categories[x])
 
-    return corrected_data
+    return corrected_data, {i: category for i, category in enumerate(categories)}
 
 
 def inference_category(pipe: Pipeline, sentences: list[str], selected_categories: list[str]) -> str:
@@ -128,8 +129,6 @@ if __name__ == "__main__":
     restored_data = pd.merge(labeled_data, restored[["ID", "restored"]], on="ID")
     # TODO End
 
-    category_named_data = label_category(restored_data)
-
-    corrected_data = correct_label_errors(category_named_data)
+    corrected_data = correct_label_errors(restored_data)
     corrected_data.to_csv(os.path.join(DATA_DIR, "label_corrected_train.csv"), index=False)
     main(corrected_data, do_predict=False)
