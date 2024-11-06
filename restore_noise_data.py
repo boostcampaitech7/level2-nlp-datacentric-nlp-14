@@ -1,6 +1,7 @@
 import os
 import random
 import re
+from typing import List, Tuple, Dict
 
 import pandas as pd
 import torch
@@ -14,7 +15,7 @@ from utils import set_seed
 set_seed()
 
 
-def load_and_filter_data(data_dir, filename="train.csv"):
+def load_and_filter_data(data_dir: str, filename: str = "train.csv") -> Tuple[pd.DataFrame, List[str], List[str]]:
     """데이터를 로드하고 필터링하여 Gold와 Black 리스트를 반환합니다."""
     data_path = os.path.join(data_dir, filename)
     data = pd.read_csv(data_path)
@@ -28,7 +29,7 @@ def load_and_filter_data(data_dir, filename="train.csv"):
     return data, Gold, Black
 
 
-def mask_sentences(sentences, mask_prob=0.1):
+def mask_sentences(sentences: List[str], mask_prob: float = 0.1) -> List[str]:
     """
     주어진 문장들에서 mask_prob 확률로 문자를 랜덤한 문자로 대체하여 마스킹된 문장을 반환합니다.
     """
@@ -48,7 +49,7 @@ def mask_sentences(sentences, mask_prob=0.1):
     return masked_sentences
 
 
-def create_training_examples(Gold, sample_size=50, mask_prob=0.5):
+def create_training_examples(Gold: List[str], sample_size: int = 50, mask_prob: float = 0.5) -> List[Dict[str, str]]:
     """
     Gold 문장들 중에서 샘플을 선택하고 마스킹하여 학습용 예시를 생성합니다.
     """
@@ -63,7 +64,9 @@ def create_training_examples(Gold, sample_size=50, mask_prob=0.5):
     return examples
 
 
-def setup_model_and_tokenizer(model_id="Bllossom/llama-3.2-Korean-Bllossom-3B"):
+def setup_model_and_tokenizer(
+    model_id: str = "Bllossom/llama-3.2-Korean-Bllossom-3B",
+) -> Tuple[AutoTokenizer, AutoModelForCausalLM]:
     """
     모델과 토크나이저를 로드하여 반환합니다.
     """
@@ -76,7 +79,15 @@ def setup_model_and_tokenizer(model_id="Bllossom/llama-3.2-Korean-Bllossom-3B"):
     return tokenizer, model
 
 
-def generate_restored_sentences(data, examples, Black, tokenizer, model, prompt, instruction):
+def generate_restored_sentences(
+    data: pd.DataFrame,
+    examples: List[Dict[str, str]],
+    Black: List[str],
+    tokenizer: AutoTokenizer,
+    model: AutoModelForCausalLM,
+    prompt: str,
+    instruction: str,
+) -> pd.DataFrame:
     """
     Black 리스트의 각 문장에 대해 모델을 사용하여 복원된 문장을 생성하고 DataFrame에 추가합니다.
     """
