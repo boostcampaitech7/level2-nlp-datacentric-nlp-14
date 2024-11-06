@@ -16,17 +16,17 @@ set_seed()
 
 
 def load_and_filter_data(data_dir: str, filename: str = "train.csv") -> Tuple[pd.DataFrame, List[str], List[str]]:
-    """데이터를 로드하고 필터링하여 Gold와 Black 리스트를 반환합니다."""
+    """데이터를 로드하고 필터링하여 gold와 black 리스트를 반환합니다."""
     data_path = os.path.join(data_dir, filename)
     data = pd.read_csv(data_path)
     sentences = list(data["text"])
 
-    # Gold: 특수 문자나 영어 문자가 없는 문장
-    Gold = [sentence for sentence in sentences if not re.search(r"[^\w\s…·]|[A-Za-z]", sentence)]
-    # Black: Gold에 속하지 않는 문장
-    Black = [sentence for sentence in sentences if sentence not in Gold]
+    # gold: 특수 문자나 영어 문자가 없는 문장
+    gold = [sentence for sentence in sentences if not re.search(r"[^\w\s…·]|[A-Za-z]", sentence)]
+    # black: gold에 속하지 않는 문장
+    black = [sentence for sentence in sentences if sentence not in gold]
 
-    return data, Gold, Black
+    return data, gold, black
 
 
 def mask_sentences(sentences: List[str], mask_prob: float = 0.1) -> List[str]:
@@ -49,11 +49,11 @@ def mask_sentences(sentences: List[str], mask_prob: float = 0.1) -> List[str]:
     return masked_sentences
 
 
-def create_training_examples(Gold: List[str], sample_size: int = 50, mask_prob: float = 0.5) -> List[Dict[str, str]]:
+def create_training_examples(gold: List[str], sample_size: int = 50, mask_prob: float = 0.5) -> List[Dict[str, str]]:
     """
-    Gold 문장들 중에서 샘플을 선택하고 마스킹하여 학습용 예시를 생성합니다.
+    gold 문장들 중에서 샘플을 선택하고 마스킹하여 학습용 예시를 생성합니다.
     """
-    selected_sentences = random.sample(Gold, sample_size)
+    selected_sentences = random.sample(gold, sample_size)
     masked = mask_sentences(selected_sentences, mask_prob=mask_prob)
 
     examples = []
@@ -82,14 +82,14 @@ def setup_model_and_tokenizer(
 def generate_restored_sentences(
     data: pd.DataFrame,
     examples: List[Dict[str, str]],
-    Black: List[str],
+    black: List[str],
     tokenizer: AutoTokenizer,
     model: AutoModelForCausalLM,
     prompt: str,
     instruction: str,
 ) -> pd.DataFrame:
     """
-    Black 리스트의 각 문장에 대해 모델을 사용하여 복원된 문장을 생성하고 DataFrame에 추가합니다.
+    black 리스트의 각 문장에 대해 모델을 사용하여 복원된 문장을 생성하고 DataFrame에 추가합니다.
     """
     # 준비된 메시지
     messages = [{"role": "system", "content": f"{prompt}"}] + examples + [{"role": "user", "content": f"{instruction}"}]
@@ -99,7 +99,7 @@ def generate_restored_sentences(
 
     print("eos_token_id:", tokenizer.eos_token_id)
 
-    for sentence in tqdm(Black, desc="Processing sentences"):
+    for sentence in tqdm(black, desc="Processing sentences"):
         # 현재 문장을 real_problem으로 설정
         real_problem = [{"role": "user", "content": sentence}]
 
@@ -144,10 +144,10 @@ def generate_restored_sentences(
 
 def main():
     # 데이터 로드 및 필터링
-    data, Gold, Black = load_and_filter_data(DATA_DIR, "train.csv")
+    data, gold, black = load_and_filter_data(DATA_DIR, "train.csv")
 
     # 학습용 예시 생성
-    examples = create_training_examples(Gold, sample_size=50, mask_prob=0.5)
+    examples = create_training_examples(gold, sample_size=50, mask_prob=0.5)
 
     # 모델과 토크나이저 설정
     model_id = "Bllossom/llama-3.2-Korean-Bllossom-3B"
@@ -161,7 +161,7 @@ def main():
     instruction = "주어진 real_problem을 네이버 기사 제목 형태로 복원하세요"
 
     # 복원된 문장 생성
-    restored_data = generate_restored_sentences(data, examples, Black, tokenizer, model, prompt, instruction)
+    restored_data = generate_restored_sentences(data, examples, black, tokenizer, model, prompt, instruction)
 
     # 결과 저장
     restored_data.to_csv(os.path.join(DATA_DIR, "restored_train.csv"), index=False)
