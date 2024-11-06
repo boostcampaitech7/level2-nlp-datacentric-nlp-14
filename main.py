@@ -96,7 +96,7 @@ def train(data: pd.DataFrame, model: AutoModelForSequenceClassification, tokeniz
     print("Training Summary")
     print("-" * 30)
     print(f"{'Train Data Count':20} : {len(data_train)}")
-    print(f"{'Train Data Count':20} : {len(data_valid)}")
+    print(f"{'Eval Data Count':20} : {len(data_valid)}")
     print(f"{'Train Loss':20} : {train_results.training_loss:.4f}")
     print(f"{'Eval Loss':20} : {eval_results['eval_loss']:.4f}")
     print(f"{'Eval F1':20} : {eval_results['eval_f1']:.4f}")
