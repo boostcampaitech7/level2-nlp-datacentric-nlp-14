@@ -1,5 +1,6 @@
 import argparse
 import os
+from collections import defaultdict
 
 import pandas as pd
 import torch
@@ -58,9 +59,15 @@ def mean_pooling(model_output: tuple[torch.Tensor, ...], attention_mask: torch.T
     return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
 
-def ensemble_target_label(labels: list[int]) -> int:
-    # TODO: 등수에 따른 가중치 부여
-    return max(set(labels), key=labels.count)
+def ensemble_target_label(labels: list[int], decay: float = 0.7) -> int:
+
+    weighted_count = defaultdict(float)
+
+    for rank, label in enumerate(labels):
+        weight = decay**rank
+        weighted_count[label] += weight
+
+    return max(weighted_count, key=weighted_count.get)
 
 
 if __name__ == "__main__":
