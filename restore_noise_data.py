@@ -154,12 +154,12 @@ def main():
     tokenizer, model = setup_model_and_tokenizer(model_id)
 
     # 프롬프트 및 인스트럭션 설정
-    Prompt = """당신은 제목 데이터 복원가 입니다. 주어진 예시를 통해 데이터를 복원시키는 방법을 학습합니다.
+    prompt = """당신은 제목 데이터 복원가 입니다. 주어진 예시를 통해 데이터를 복원시키는 방법을 학습합니다.
 You are a title data restorer. Learn how to restore data through given examples."""
     instruction = "주어진 real_problem을 네이버 기사 제목 형태로 복원하세요"
 
     # 복원된 문장 생성
-    restored_data = generate_restored_sentences(data, examples, Black, tokenizer, model, Prompt, instruction)
+    restored_data = generate_restored_sentences(data, examples, Black, tokenizer, model, prompt, instruction)
 
     # 결과 저장
     restored_data.to_csv(os.path.join(DATA_DIR, "restored_train.csv"), index=False)
