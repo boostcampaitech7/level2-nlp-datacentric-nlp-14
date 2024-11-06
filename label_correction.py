@@ -1,7 +1,9 @@
+import argparse
 import os
 from itertools import combinations
 
 import pandas as pd
+from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, Pipeline, pipeline
 
 from configs import DATA_DIR, DEVICE
@@ -10,16 +12,7 @@ from noise_data_filter import noise_labeling
 from utils import set_seed
 
 
-def correct_label_errors(data: pd.DataFrame):
-    # TODO: Do Something
-    corrected_data = data.copy()
-    return corrected_data
-
-
-def label_category(data: pd.DataFrame) -> pd.DataFrame:
-    small_noised_correct_label_data = data[(data["noise_label"]) & (data["noise_ratio"] <= 0.35)]
-
-    categories = []
+def correct_label_errors(data: pd.DataFrame, do_entire: bool = False) -> pd.DataFrame:
 
     model_name = "Qwen/Qwen2.5-7B-Instruct"
     pipe = pipeline(
@@ -29,6 +22,17 @@ def label_category(data: pd.DataFrame) -> pd.DataFrame:
         max_new_tokens=128,
         device=DEVICE,
     )
+
+    category_named_data, category_map = label_category(pipe, data)
+    relabeled_data = relabel_category(pipe, category_named_data, category_map, do_entire)
+
+    return relabeled_data
+
+
+def label_category(pipe: Pipeline, data: pd.DataFrame) -> tuple[pd.DataFrame, dict[int, str]]:
+    small_noised_correct_label_data = data[(data["noise_label"]) & (data["noise_ratio"] <= 0.35)]
+
+    categories = []
 
     for i in range(7):
         selected_label_data = small_noised_correct_label_data[small_noised_correct_label_data["target"] == i]
@@ -53,7 +57,7 @@ def label_category(data: pd.DataFrame) -> pd.DataFrame:
     corrected_data = data.copy()
     corrected_data["category"] = corrected_data["target"].apply(lambda x: categories[x])
 
-    return corrected_data
+    return corrected_data, {i: category for i, category in enumerate(categories)}
 
 
 def inference_category(pipe: Pipeline, sentences: list[str], selected_categories: list[str]) -> str:
@@ -117,8 +121,58 @@ def inference_new_category(pipe: Pipeline, sentences: list[str], categories: lis
     return pipe(text, return_full_text=False)[0]["generated_text"]
 
 
+def relabel_category(pipe: Pipeline, data: pd.DataFrame, category_map: dict[int, str], do_entire: bool) -> pd.DataFrame:
+    relabeled_data = data.copy()
+    relabeled_data["new_target"] = relabeled_data["target"]
+
+    if do_entire:
+        corrected_data = relabeled_data
+    else:
+        corrected_data = relabeled_data[~relabeled_data["noise_label"]]
+
+    for i, row in tqdm(corrected_data.iterrows(), total=corrected_data.shape[0]):
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "Analyze the topic of the given news headline and select the most appropriate category number.\n"
+                    "- Categories are numbered from 0 to 6.\n"
+                    "- Only provide the category number as the answer.\n"
+                    f"Category Mapping:\n{category_map}"
+                ),
+            },
+            {"role": "user", "content": row["text"]},
+        ]
+        text = pipe.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        while True:
+            try:
+                response: str = pipe(text, return_full_text=False)[0]["generated_text"]
+                relabeled_data.loc[i, "new_target"] = convert_response_to_label(response)
+                break
+            except Exception:
+                print(f"Error occurred response at {i}.")
+                print("---------")
+                print(response)
+                print("---------")
+
+    return relabeled_data
+
+
+def convert_response_to_label(response: str) -> int:
+    if response.isdigit() and 0 <= int(response) <= 6:
+        return int(response)
+    else:
+        raise ValueError("Invalid response")
+
+
 if __name__ == "__main__":
     set_seed()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--do-entire", action="store_true")
+    parser.add_argument("--do-predict", action="store_true")
+    args = parser.parse_args()
+
     data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
 
     labeled_data = noise_labeling(data)
@@ -128,8 +182,10 @@ if __name__ == "__main__":
     restored_data = pd.merge(labeled_data, restored[["ID", "restored"]], on="ID")
     # TODO End
 
-    category_named_data = label_category(restored_data)
-
-    corrected_data = correct_label_errors(category_named_data)
+    corrected_data = correct_label_errors(restored_data, do_entire=args.do_entire)
     corrected_data.to_csv(os.path.join(DATA_DIR, "label_corrected_train.csv"), index=False)
-    main(corrected_data, do_predict=False)
+
+    final_data = corrected_data[["ID", "restored", "new_target"]].rename(
+        columns={"restored": "text", "new_target": "target"}
+    )
+    main(final_data, do_predict=args.do_predict)
