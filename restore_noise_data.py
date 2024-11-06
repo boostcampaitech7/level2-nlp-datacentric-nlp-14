@@ -11,9 +11,6 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from configs import DATA_DIR
 from utils import set_seed
 
-# 시드 고정
-set_seed()
-
 
 def load_and_filter_data(data_dir: str, filename: str = "train.csv") -> Tuple[pd.DataFrame, List[str], List[str]]:
     """데이터를 로드하고 필터링하여 gold와 black 리스트를 반환합니다."""
@@ -170,4 +167,5 @@ def main():
 
 
 if __name__ == "__main__":
+    set_seed()
     main()
