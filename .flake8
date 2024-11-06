@@ -12,5 +12,5 @@ exclude =
     output,
     # No need to include the data path
     data,
-max-complexity = 5
+max-complexity = 10
 statistics = true
