@@ -13,31 +13,34 @@ from utils import set_seed
 
 
 def relabel_data(data: pd.DataFrame) -> pd.DataFrame:
-    model_name = "jhgan/ko-sroberta-multitask"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModel.from_pretrained(model_name).to(DEVICE)
-
     noise_data = data[(data["noise_label"]) & (0.3 <= data["noise_ratio"]) & (data["noise_ratio"] <= 0.5)]
     base_sentences = noise_data["restored"].tolist()
 
     unnoised_data = data[~data["noise_label"]]
     sentences = unnoised_data["text"].tolist()
 
-    base_embeddings = get_sentence_embedding(model, tokenizer, base_sentences)
-    embeddings = get_sentence_embedding(model, tokenizer, sentences)
-
-    similarity_matrix = cosine_similarity(embeddings.cpu().numpy(), base_embeddings.cpu().numpy())
-
-    top_5_similar_indices = similarity_matrix.argsort(axis=1)[:, -5:][:, ::-1]
+    top_similar_indices = get_similar_indices(base_sentences, sentences)
 
     relabeled_data = data.copy()
     relabeled_data["new_target"] = data["target"]
 
-    for i, indices in enumerate(top_5_similar_indices):
+    for i, indices in enumerate(top_similar_indices):
         new_target = ensemble_target_label(noise_data.iloc[indices]["target"].tolist())
         relabeled_data.loc[unnoised_data.index[i], "new_target"] = new_target
 
     return relabeled_data
+
+
+def get_similar_indices(base_sentences: list[str], sentences: list[str], topk: int = 5) -> list[int]:
+    model_name = "jhgan/ko-sroberta-multitask"
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModel.from_pretrained(model_name).to(DEVICE)
+
+    base_embeddings = get_sentence_embedding(model, tokenizer, base_sentences)
+    embeddings = get_sentence_embedding(model, tokenizer, sentences)
+
+    similarity_matrix = cosine_similarity(embeddings.cpu().numpy(), base_embeddings.cpu().numpy())
+    return similarity_matrix.argsort(axis=1)[:, -topk:][:, ::-1]
 
 
 def get_sentence_embedding(model: AutoModel, tokenizer: AutoTokenizer, sentences: list[str]) -> torch.Tensor:
