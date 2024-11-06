@@ -1,3 +1,4 @@
+import argparse
 import os
 from itertools import combinations
 
@@ -166,6 +167,12 @@ def convert_response_to_label(response: str) -> int:
 
 if __name__ == "__main__":
     set_seed()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--do-entire", action="store_true")
+    parser.add_argument("--do-predict", action="store_true")
+    args = parser.parse_args()
+
     data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
 
     labeled_data = noise_labeling(data)
@@ -175,6 +182,10 @@ if __name__ == "__main__":
     restored_data = pd.merge(labeled_data, restored[["ID", "restored"]], on="ID")
     # TODO End
 
-    corrected_data = correct_label_errors(restored_data)
+    corrected_data = correct_label_errors(restored_data, do_entire=args.do_entire)
     corrected_data.to_csv(os.path.join(DATA_DIR, "label_corrected_train.csv"), index=False)
-    main(corrected_data, do_predict=False)
+
+    final_data = corrected_data[["ID", "restored", "new_target"]].rename(
+        columns={"restored": "text", "new_target": "target"}
+    )
+    main(final_data, do_predict=args.do_predict)
