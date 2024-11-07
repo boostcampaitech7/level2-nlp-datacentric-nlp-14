@@ -6,7 +6,7 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 
 # 페이지 기본 설정
-st.set_page_config(page_title="Noise & Label Error Dashboard", layout="wide", page_icon="📊")
+st.set_page_config(page_title="Data Analysis Dashboard", layout="wide", page_icon="📊")
 
 # 사이드바 메뉴 설정
 with st.sidebar:
