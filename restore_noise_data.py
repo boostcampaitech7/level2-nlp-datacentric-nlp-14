@@ -4,18 +4,38 @@ import re
 from typing import Dict, List, Tuple
 
 import pandas as pd
-import torch
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
-from configs import DATA_DIR
+from configs import DATA_DIR, DEVICE
 from utils import set_seed
 
 
-def load_and_filter_data(data_dir: str, filename: str = "train.csv") -> Tuple[pd.DataFrame, List[str], List[str]]:
+def restore_noise(data: pd.DataFrame) -> pd.DataFrame:
+    # 데이터 로드 및 필터링
+    gold, black = load_and_filter_data(data)
+
+    # 학습용 예시 생성
+    examples = create_training_examples(gold, sample_size=50, mask_prob=0.5)
+
+    # 모델과 토크나이저 설정
+    model_id = "Bllossom/llama-3.2-Korean-Bllossom-3B"
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    model = AutoModelForCausalLM.from_pretrained(model_id).to(DEVICE)
+
+    # 프롬프트 및 인스트럭션 설정
+    prompt = (
+        "당신은 제목 데이터 복원가 입니다. 주어진 예시를 통해 데이터를 복원시키는 방법을 학습합니다.\n"
+        "You are a title data restorer. Learn how to restore data through given examples."
+    )
+    instruction = "주어진 real_problem을 네이버 기사 제목 형태로 복원하세요"
+
+    # 복원된 문장 생성
+    return generate_restored_sentences(data, examples, black, tokenizer, model, prompt, instruction)
+
+
+def load_and_filter_data(data: pd.DataFrame) -> Tuple[List[str], List[str]]:
     """데이터를 로드하고 필터링하여 gold와 black 리스트를 반환합니다."""
-    data_path = os.path.join(data_dir, filename)
-    data = pd.read_csv(data_path)
     sentences = list(data["text"])
 
     # gold: 특수 문자나 영어 문자가 없는 문장
@@ -23,7 +43,7 @@ def load_and_filter_data(data_dir: str, filename: str = "train.csv") -> Tuple[pd
     # black: gold에 속하지 않는 문장
     black = [sentence for sentence in sentences if sentence not in gold]
 
-    return data, gold, black
+    return gold, black
 
 
 def mask_sentences(sentences: List[str], mask_prob: float = 0.1) -> List[str]:
@@ -61,27 +81,12 @@ def create_training_examples(gold: List[str], sample_size: int = 50, mask_prob: 
     return examples
 
 
-def setup_model_and_tokenizer(
-    model_id: str = "Bllossom/llama-3.2-Korean-Bllossom-3B",
-) -> Tuple[AutoTokenizer, AutoModelForCausalLM]:
-    """
-    모델과 토크나이저를 로드하여 반환합니다.
-    """
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        torch_dtype=torch.bfloat16,
-        device_map="auto",
-    )
-    return tokenizer, model
-
-
 def generate_restored_sentences(
     data: pd.DataFrame,
     examples: List[Dict[str, str]],
     black: List[str],
-    tokenizer: AutoTokenizer,
-    model: AutoModelForCausalLM,
+    tokenizer: PreTrainedTokenizer,
+    model: PreTrainedModel,
     prompt: str,
     instruction: str,
 ) -> pd.DataFrame:
@@ -139,33 +144,11 @@ def generate_restored_sentences(
     return data
 
 
-def main():
-    # 데이터 로드 및 필터링
-    data, gold, black = load_and_filter_data(DATA_DIR, "train.csv")
-
-    # 학습용 예시 생성
-    examples = create_training_examples(gold, sample_size=50, mask_prob=0.5)
-
-    # 모델과 토크나이저 설정
-    model_id = "Bllossom/llama-3.2-Korean-Bllossom-3B"
-    tokenizer, model = setup_model_and_tokenizer(model_id)
-
-    # 프롬프트 및 인스트럭션 설정
-    prompt = (
-        "당신은 제목 데이터 복원가 입니다. 주어진 예시를 통해 데이터를 복원시키는 방법을 학습합니다.\n"
-        "You are a title data restorer. Learn how to restore data through given examples."
-    )
-    instruction = "주어진 real_problem을 네이버 기사 제목 형태로 복원하세요"
-
-    # 복원된 문장 생성
-    restored_data = generate_restored_sentences(data, examples, black, tokenizer, model, prompt, instruction)
-
+if __name__ == "__main__":
+    set_seed()
+    data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
+    restored_data = restore_noise(data)
     # 결과 저장
     restored_data.to_csv(os.path.join(DATA_DIR, "restored_train.csv"), index=False)
 
     print("Restored sentences have been saved to 'restored_train.csv'.")
-
-
-if __name__ == "__main__":
-    set_seed()
-    main()
