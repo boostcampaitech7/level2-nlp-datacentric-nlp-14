@@ -33,7 +33,7 @@ def relabel_data(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_similar_indices(base_sentences: list[str], sentences: list[str], topk: int = 5) -> list[int]:
-    model_name = "jhgan/ko-sroberta-multitask"
+    model_name = "./results/jhgan/ko-sroberta-multitask"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModel.from_pretrained(model_name).to(DEVICE)
 

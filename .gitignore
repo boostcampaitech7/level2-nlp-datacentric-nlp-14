@@ -1,5 +1,6 @@
 data/
 output/
+results/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
