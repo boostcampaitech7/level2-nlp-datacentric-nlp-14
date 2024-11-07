@@ -19,6 +19,7 @@ from augmentation import back_translate
 from configs import DATA_DIR, DEVICE, OUTPUT_DIR, SEED
 from noise_data_filter import noise_labeling
 from relabel_with_embedding import relabel_data
+from restore_noise_data import restore_noise
 from utils import set_seed
 
 
@@ -140,27 +141,24 @@ def main(data: pd.DataFrame, do_predict: bool = True):
 
 if __name__ == "__main__":
     set_seed()
+    # Load Data
     data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
 
+    # Clean Data
     noise_labeled_data = noise_labeling(data)
-
-    # TODO: restored_sentence 만드는 함수로 교체 필요
-    restored = pd.read_csv(os.path.join(DATA_DIR, "restored_sentences.csv"))
-    restored_data = pd.merge(noise_labeled_data, restored[["ID", "restored"]], on="ID")
-    # TODO End
-
+    restored_data = restore_noise(noise_labeled_data)
     relabeled_data = relabel_data(restored_data)
+    cleaned_data = pd.DataFrame(
+        {
+            "ID": relabeled_data["ID"],
+            "text": relabeled_data["restored"],
+            "target": relabeled_data["new_target"],
+        }
+    )
+    filtered_data = cleaned_data[~cleaned_data["text"].str.contains("\n")]
 
-    noise_df = relabeled_data[relabeled_data["noise_label"]]
+    # Augment Data
+    back_translated_data = back_translate(filtered_data)
+    augmented_data = pd.concat([cleaned_data, back_translated_data], ignore_index=True)
 
-    cleaned_data = relabeled_data[["ID", "text", "target"]]
-
-    cleaned_data.loc[noise_df.index, "text"] = noise_df["restored"]
-    cleaned_data.loc[:, "target"] = relabeled_data["new_target"]
-
-    cleaned_data = cleaned_data[~cleaned_data["text"].str.contains("\n")]
-
-    back_translated_data = back_translate(cleaned_data)
-    final_data = pd.concat([cleaned_data, back_translated_data], ignore_index=True)
-
-    main(final_data)
+    main(augmented_data)
