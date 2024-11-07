@@ -1,19 +1,20 @@
 import os
 import random
-import re
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import pandas as pd
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
 from configs import DATA_DIR, DEVICE
+from noise_data_filter import noise_labeling
 from utils import set_seed
 
 
 def restore_noise(data: pd.DataFrame) -> pd.DataFrame:
     # 데이터 로드 및 필터링
-    gold, black = load_and_filter_data(data)
+    gold = data[data["noise_label"]]["text"].tolist()
+    black = data[~data["noise_label"]]["text"].tolist()
 
     # 학습용 예시 생성
     examples = create_training_examples(gold, sample_size=50, mask_prob=0.5)
@@ -34,16 +35,19 @@ def restore_noise(data: pd.DataFrame) -> pd.DataFrame:
     return generate_restored_sentences(data, examples, black, tokenizer, model, prompt, instruction)
 
 
-def load_and_filter_data(data: pd.DataFrame) -> Tuple[List[str], List[str]]:
-    """데이터를 로드하고 필터링하여 gold와 black 리스트를 반환합니다."""
-    sentences = list(data["text"])
+def create_training_examples(gold: List[str], sample_size: int = 50, mask_prob: float = 0.5) -> List[Dict[str, str]]:
+    """
+    gold 문장들 중에서 샘플을 선택하고 마스킹하여 학습용 예시를 생성합니다.
+    """
+    selected_sentences = random.sample(gold, sample_size)
+    masked = mask_sentences(selected_sentences, mask_prob=mask_prob)
 
-    # gold: 특수 문자나 영어 문자가 없는 문장
-    gold = [sentence for sentence in sentences if not re.search(r"[^\w\s…·]|[A-Za-z]", sentence)]
-    # black: gold에 속하지 않는 문장
-    black = [sentence for sentence in sentences if sentence not in gold]
+    examples = []
+    for original, masked_sentence in zip(selected_sentences, masked):
+        examples.append({"role": "user", "content": masked_sentence})
+        examples.append({"role": "assistant", "content": original})
 
-    return gold, black
+    return examples
 
 
 def mask_sentences(sentences: List[str], mask_prob: float = 0.1) -> List[str]:
@@ -64,21 +68,6 @@ def mask_sentences(sentences: List[str], mask_prob: float = 0.1) -> List[str]:
         masked_sentence = "".join(sentence_chars)
         masked_sentences.append(masked_sentence)
     return masked_sentences
-
-
-def create_training_examples(gold: List[str], sample_size: int = 50, mask_prob: float = 0.5) -> List[Dict[str, str]]:
-    """
-    gold 문장들 중에서 샘플을 선택하고 마스킹하여 학습용 예시를 생성합니다.
-    """
-    selected_sentences = random.sample(gold, sample_size)
-    masked = mask_sentences(selected_sentences, mask_prob=mask_prob)
-
-    examples = []
-    for original, masked_sentence in zip(selected_sentences, masked):
-        examples.append({"role": "user", "content": masked_sentence})
-        examples.append({"role": "assistant", "content": original})
-
-    return examples
 
 
 def generate_restored_sentences(
@@ -148,7 +137,8 @@ def generate_restored_sentences(
 if __name__ == "__main__":
     set_seed()
     data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
-    restored_data = restore_noise(data)
+    noise_labeled_data = noise_labeling(data)
+    restored_data = restore_noise(noise_labeled_data)
     # 결과 저장
     restored_data.to_csv(os.path.join(DATA_DIR, "restored_train.csv"), index=False)
 
