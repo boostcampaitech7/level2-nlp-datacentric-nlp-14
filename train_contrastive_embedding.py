@@ -93,8 +93,7 @@ def create_triplet_data(
     return Dataset.from_dict(triplet_data)
 
 
-if __name__ == "__main__":
-    set_seed()
+def train_contrastive() -> tuple[PreTrainedModel, PreTrainedTokenizer]:
     model_name = "jhgan/ko-sroberta-multitask"
     model = AutoModel.from_pretrained(model_name).to(DEVICE)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -149,3 +148,9 @@ if __name__ == "__main__":
     trainer.train()
     trainer.model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
+    return trainer.model, tokenizer
+
+
+if __name__ == "__main__":
+    set_seed()
+    train_contrastive()
