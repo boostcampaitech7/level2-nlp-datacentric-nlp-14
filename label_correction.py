@@ -7,7 +7,7 @@ from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, Pipeline, pipeline
 
 from configs import DATA_DIR, DEVICE
-from noise_data_filter import noise_labeling
+from denoise import noise_labeling
 from utils import set_seed
 
 

@@ -9,7 +9,7 @@ from torch.nn import functional as F
 from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer, Trainer, TrainingArguments
 
 from configs import DATA_DIR, DEVICE, SEED
-from noise_data_filter import noise_labeling
+from denoise import noise_labeling
 from utils import set_seed
 
 
