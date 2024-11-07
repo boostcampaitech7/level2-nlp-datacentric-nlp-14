@@ -22,9 +22,9 @@ class TripletTrainer(Trainer):
         negative_emb = self._get_embeddings(model, inputs, "negative")
 
         # Compute Triplet Loss
-        margin = 1.0  # Margin for Triplet Loss
-        pos_dist = F.pairwise_distance(anchor_emb, positive_emb)
-        neg_dist = F.pairwise_distance(anchor_emb, negative_emb)
+        margin = 0.3  # Margin for Triplet Loss
+        pos_dist = 1 - F.cosine_similarity(anchor_emb, positive_emb)
+        neg_dist = 1 - F.cosine_similarity(anchor_emb, negative_emb)
         loss = F.relu(pos_dist - neg_dist + margin).mean()
 
         return loss
