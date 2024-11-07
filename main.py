@@ -138,4 +138,7 @@ def main(data: pd.DataFrame, do_predict: bool = True):
 if __name__ == "__main__":
     set_seed()
     data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
+
+    data = data[~data["text"].str.contains("\n")]
+
     main(data)
