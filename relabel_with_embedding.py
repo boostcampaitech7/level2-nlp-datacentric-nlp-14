@@ -35,8 +35,11 @@ def relabel_data(data: pd.DataFrame) -> pd.DataFrame:
 
 def get_similar_indices(base_sentences: list[str], sentences: list[str], topk: int = 5) -> list[int]:
     model_name = "./results/jhgan/ko-sroberta-multitask"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModel.from_pretrained(model_name).to(DEVICE)
+    try:
+        model = AutoModel.from_pretrained(model_name).to(DEVICE)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+    except Exception:
+        model, tokenizer = train_contrastive()
 
     base_embeddings = get_sentence_embedding(model, tokenizer, base_sentences)
     embeddings = get_sentence_embedding(model, tokenizer, sentences)
