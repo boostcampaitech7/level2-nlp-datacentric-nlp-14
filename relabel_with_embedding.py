@@ -27,7 +27,7 @@ def relabel_data(data: pd.DataFrame) -> pd.DataFrame:
 
     for i, (indices, scores) in enumerate(zip(top_similar_indices, similarity_scores)):
         labels = noise_data.iloc[indices]["target"].tolist()
-        new_target = ensemble_target_label_with_similarity(labels, scores)
+        new_target = ensemble_target_label(labels)
         relabeled_data.loc[unnoised_data.index[i], "new_target"] = new_target
 
     return relabeled_data
