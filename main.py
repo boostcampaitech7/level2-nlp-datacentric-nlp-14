@@ -18,7 +18,7 @@ from transformers import (
 from augmentation import back_translate
 from configs import DATA_DIR, DEVICE, OUTPUT_DIR, SEED
 from denoise import noise_labeling, restore_noise
-from relabel_with_embedding import relabel_data
+from relabel import relabel_data
 from utils import set_seed
 
 

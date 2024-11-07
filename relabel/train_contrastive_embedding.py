@@ -10,7 +10,6 @@ from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTo
 
 from configs import DATA_DIR, DEVICE, SEED
 from denoise import noise_labeling
-from utils import set_seed
 
 
 class TripletTrainer(Trainer):
@@ -163,8 +162,3 @@ def train_contrastive() -> tuple[PreTrainedModel, PreTrainedTokenizer]:
     trainer.model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
     return trainer.model, tokenizer
-
-
-if __name__ == "__main__":
-    set_seed()
-    train_contrastive()
