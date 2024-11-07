@@ -94,7 +94,7 @@ def generate_restored_sentences(
     black 리스트의 각 문장에 대해 모델을 사용하여 복원된 문장을 생성하고 DataFrame에 추가합니다.
     """
     # 준비된 메시지
-    messages = [{"role": "system", "content": f"{prompt}"}] + examples + [{"role": "user", "content": f"{instruction}"}]
+    messages = [{"role": "system", "content": prompt}, *examples, {"role": "user", "content": instruction}]
 
     original_sentences = []
     restored_sentences = []
