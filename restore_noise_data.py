@@ -99,8 +99,6 @@ def generate_restored_sentences(
     original_sentences = []
     restored_sentences = []
 
-    print("eos_token_id:", tokenizer.eos_token_id)
-
     for sentence in tqdm(black, desc="Processing sentences"):
         # 현재 문장을 real_problem으로 설정
         real_problem = [{"role": "user", "content": sentence}]
@@ -109,9 +107,12 @@ def generate_restored_sentences(
         input_messages = messages + real_problem
 
         # 토크나이즈
-        input_ids = tokenizer.apply_chat_template(input_messages, add_generation_prompt=True, return_tensors="pt").to(
-            model.device
-        )
+        inputs = tokenizer.apply_chat_template(
+            input_messages,
+            add_generation_prompt=True,
+            return_dict=True,
+            return_tensors="pt",
+        ).to(model.device)
 
         terminators = [
             tokenizer.convert_tokens_to_ids("<|end_of_text|>"),
@@ -120,17 +121,17 @@ def generate_restored_sentences(
 
         # 생성
         outputs = model.generate(
-            input_ids,
+            **inputs,
             max_new_tokens=64,
             eos_token_id=terminators,
+            pad_token_id=tokenizer.eos_token_id,
             do_sample=True,
             temperature=0.6,
-            early_stopping=True,
             top_p=0.9,
         )
 
         # 디코드
-        generated_text = tokenizer.decode(outputs[0][input_ids.shape[-1] :], skip_special_tokens=True)
+        generated_text = tokenizer.decode(outputs[0][inputs["input_ids"].shape[-1] :], skip_special_tokens=True)
 
         # 결과 저장
         original_sentences.append(sentence)
