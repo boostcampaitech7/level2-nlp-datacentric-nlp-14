@@ -10,7 +10,6 @@ from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTo
 
 from configs import DATA_DIR, DEVICE, SEED
 from noise_data_filter import noise_labeling
-from relabel_with_embedding import get_sentence_embedding
 from utils import set_seed
 
 
@@ -91,6 +90,21 @@ def create_triplet_data(
             triplet_data["negative"].append(hard_negative_text)
 
     return Dataset.from_dict(triplet_data)
+
+
+def get_sentence_embedding(model: AutoModel, tokenizer: AutoTokenizer, sentences: list[str]) -> torch.Tensor:
+    encoded_input = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt").to(DEVICE)
+
+    with torch.no_grad():
+        model_output = model(**encoded_input)
+
+    return mean_pooling(model_output, encoded_input["attention_mask"])
+
+
+def mean_pooling(model_output: tuple[torch.Tensor, ...], attention_mask: torch.Tensor) -> torch.Tensor:
+    token_embeddings = model_output[0]  # First element of model_output contains all token embeddings
+    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
 
 def train_contrastive() -> tuple[PreTrainedModel, PreTrainedTokenizer]:

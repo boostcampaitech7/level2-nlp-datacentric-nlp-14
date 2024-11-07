@@ -10,6 +10,7 @@ from transformers import AutoModel, AutoTokenizer
 from configs import DATA_DIR, DEVICE
 from main import main
 from noise_data_filter import noise_labeling
+from train_contrastive_embedding import train_contrastive
 from utils import set_seed
 
 
