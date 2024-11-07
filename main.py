@@ -1,3 +1,4 @@
+import argparse
 import os
 
 import evaluate
@@ -140,6 +141,11 @@ def main(data: pd.DataFrame, do_predict: bool = True):
 
 if __name__ == "__main__":
     set_seed()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--train-only", action="store_true")
+    args = parser.parse_args()
+
     # Load Data
     print("Loading data...")
     data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
@@ -169,4 +175,4 @@ if __name__ == "__main__":
     print(f"Data augmented. Shape: {augmented_data.shape}\n")
 
     print("Start training and predicting...")
-    main(augmented_data)
+    main(augmented_data, do_predict=not args.train_only)
