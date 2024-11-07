@@ -141,11 +141,16 @@ def main(data: pd.DataFrame, do_predict: bool = True):
 if __name__ == "__main__":
     set_seed()
     # Load Data
+    print("Loading data...")
     data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
+    print(f"Data loaded. Shape: {data.shape}\n")
 
     # Clean Data
+    print("Labeling noise in data...")
     noise_labeled_data = noise_labeling(data)
+    print("Restoring noise in data...")
     restored_data = restore_noise(noise_labeled_data)
+    print("Relabeling data...")
     relabeled_data = relabel_data(restored_data)
     cleaned_data = pd.DataFrame(
         {
@@ -155,9 +160,13 @@ if __name__ == "__main__":
         }
     )
     filtered_data = cleaned_data[~cleaned_data["text"].str.contains("\n")]
+    print(f"Data cleaned. Shape: {filtered_data.shape}\n")
 
     # Augment Data
+    print("Back translating data for augmentation...")
     back_translated_data = back_translate(filtered_data)
     augmented_data = pd.concat([cleaned_data, back_translated_data], ignore_index=True)
+    print(f"Data augmented. Shape: {augmented_data.shape}\n")
 
+    print("Start training and predicting...")
     main(augmented_data)
