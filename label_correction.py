@@ -7,7 +7,6 @@ from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, Pipeline, pipeline
 
 from configs import DATA_DIR, DEVICE
-from main import main
 from noise_data_filter import noise_labeling
 from utils import set_seed
 
@@ -184,8 +183,3 @@ if __name__ == "__main__":
 
     corrected_data = correct_label_errors(restored_data, do_entire=args.do_entire)
     corrected_data.to_csv(os.path.join(DATA_DIR, "label_corrected_train.csv"), index=False)
-
-    final_data = corrected_data[["ID", "restored", "new_target"]].rename(
-        columns={"restored": "text", "new_target": "target"}
-    )
-    main(final_data, do_predict=args.do_predict)

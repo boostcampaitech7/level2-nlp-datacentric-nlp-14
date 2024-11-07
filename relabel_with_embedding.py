@@ -8,7 +8,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 from transformers import AutoModel, AutoTokenizer
 
 from configs import DATA_DIR, DEVICE
-from main import main
 from noise_data_filter import noise_labeling
 from train_contrastive_embedding import train_contrastive
 from utils import set_seed
@@ -110,12 +109,3 @@ if __name__ == "__main__":
 
     corrected_data = relabel_data(restored_data)
     corrected_data.to_csv(os.path.join(DATA_DIR, "train_relabel_with_embedding.csv"), index=False)
-
-    noise_df = corrected_data[corrected_data["noise_label"]]
-
-    final_data = corrected_data[["ID", "text", "target"]]
-
-    final_data.loc[noise_df.index, "text"] = noise_df["restored"]
-    final_data.loc[:, "target"] = corrected_data["new_target"]
-
-    main(final_data, do_predict=args.do_predict)
