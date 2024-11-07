@@ -15,7 +15,7 @@ from transformers import (
     TrainingArguments,
 )
 
-from augmentation import back_translate
+from augment import back_translate
 from configs import DATA_DIR, DEVICE, OUTPUT_DIR, SEED
 from denoise import noise_labeling, restore_noise
 from relabel import relabel_data
