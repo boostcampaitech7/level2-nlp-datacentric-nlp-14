@@ -1,9 +1,5 @@
-import os
-
 import pandas as pd
 from kiwipiepy import Kiwi
-
-from configs import DATA_DIR
 
 # Kiwi 형태소 분석기 초기화
 kiwi = Kiwi()
@@ -49,9 +45,10 @@ def noise_labeling(data: pd.DataFrame):
 
 
 if __name__ == "__main__":
+    import os
 
-    train_df = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
-
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    train_df = pd.read_csv(os.path.join(script_dir, "..", "examples", "noise_text_example.csv"))
     noise_label_data = noise_labeling(train_df)
 
-    noise_label_data.to_csv(os.path.join(DATA_DIR, "train_with_noise_ratio_1.csv"), index=False)
+    print(noise_label_data.head())

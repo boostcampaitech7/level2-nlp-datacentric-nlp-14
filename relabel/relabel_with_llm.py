@@ -1,18 +1,13 @@
-import argparse
-import os
 from itertools import combinations
 
 import pandas as pd
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, Pipeline, pipeline
 
-from configs import DATA_DIR, DEVICE
-from main import main
-from noise_data_filter import noise_labeling
-from utils import set_seed
+from configs import DEVICE
 
 
-def correct_label_errors(data: pd.DataFrame, do_entire: bool = False) -> pd.DataFrame:
+def relabel_data_with_llm(data: pd.DataFrame, do_entire: bool = False) -> pd.DataFrame:
 
     model_name = "Qwen/Qwen2.5-7B-Instruct"
     pipe = pipeline(
@@ -163,29 +158,3 @@ def convert_response_to_label(response: str) -> int:
         return int(response)
     else:
         raise ValueError("Invalid response")
-
-
-if __name__ == "__main__":
-    set_seed()
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--do-entire", action="store_true")
-    parser.add_argument("--do-predict", action="store_true")
-    args = parser.parse_args()
-
-    data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
-
-    labeled_data = noise_labeling(data)
-
-    # TODO: restored_sentence 만드는 함수로 교체 필요
-    restored = pd.read_csv(os.path.join(DATA_DIR, "restored_sentences.csv"))
-    restored_data = pd.merge(labeled_data, restored[["ID", "restored"]], on="ID")
-    # TODO End
-
-    corrected_data = correct_label_errors(restored_data, do_entire=args.do_entire)
-    corrected_data.to_csv(os.path.join(DATA_DIR, "label_corrected_train.csv"), index=False)
-
-    final_data = corrected_data[["ID", "restored", "new_target"]].rename(
-        columns={"restored": "text", "new_target": "target"}
-    )
-    main(final_data, do_predict=args.do_predict)

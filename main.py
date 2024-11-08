@@ -1,3 +1,4 @@
+import argparse
 import os
 
 import evaluate
@@ -15,7 +16,10 @@ from transformers import (
     TrainingArguments,
 )
 
+from augment import back_translate
 from configs import DATA_DIR, DEVICE, OUTPUT_DIR, SEED
+from denoise import noise_labeling, restore_noise
+from relabel import relabel_data
 from utils import set_seed
 
 
@@ -137,5 +141,38 @@ def main(data: pd.DataFrame, do_predict: bool = True):
 
 if __name__ == "__main__":
     set_seed()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--train-only", action="store_true")
+    args = parser.parse_args()
+
+    # Load Data
+    print("Loading data...")
     data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
-    main(data)
+    print(f"Data loaded. Shape: {data.shape}\n")
+
+    # Clean Data
+    print("Labeling noise in data...")
+    noise_labeled_data = noise_labeling(data)
+    print("Restoring noise in data...")
+    restored_data = restore_noise(noise_labeled_data)
+    print("Relabeling data...")
+    relabeled_data = relabel_data(restored_data)
+    cleaned_data = pd.DataFrame(
+        {
+            "ID": relabeled_data["ID"],
+            "text": relabeled_data["restored"],
+            "target": relabeled_data["new_target"],
+        }
+    )
+    filtered_data = cleaned_data[~cleaned_data["text"].str.contains("\n")]
+    print(f"Data cleaned. Shape: {filtered_data.shape}\n")
+
+    # Augment Data
+    print("Back translating data for augmentation...")
+    back_translated_data = back_translate(filtered_data)
+    augmented_data = pd.concat([cleaned_data, back_translated_data], ignore_index=True)
+    print(f"Data augmented. Shape: {augmented_data.shape}\n")
+
+    print("Start training and predicting...")
+    main(augmented_data, do_predict=not args.train_only)

@@ -1,17 +1,13 @@
-import argparse
-import os
 from collections import defaultdict
 
 import pandas as pd
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
-from configs import DATA_DIR, DEVICE
-from main import main
-from noise_data_filter import noise_labeling
-from train_contrastive_embedding import train_contrastive
-from utils import set_seed
+from configs import DEVICE
+
+from .train_contrastive_embedding import train_contrastive
 
 
 def relabel_data(data: pd.DataFrame) -> pd.DataFrame:
@@ -54,8 +50,10 @@ def get_similar_indices_with_scores(
     return topk_indices, topk_scores
 
 
-def get_sentence_embedding(model: AutoModel, tokenizer: AutoTokenizer, sentences: list[str]) -> torch.Tensor:
-    encoded_input = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt").to(DEVICE)
+def get_sentence_embedding(
+    model: PreTrainedModel, tokenizer: PreTrainedTokenizer, sentences: list[str]
+) -> torch.Tensor:
+    encoded_input = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt").to(model.device)
 
     with torch.no_grad():
         model_output = model(**encoded_input)
@@ -90,32 +88,3 @@ def ensemble_target_label(labels: list[int], decay: float = 0.7) -> int:
         weighted_count[label] += weight
 
     return max(weighted_count, key=weighted_count.get)
-
-
-if __name__ == "__main__":
-    set_seed()
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--do-predict", action="store_true")
-    args = parser.parse_args()
-
-    data = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
-
-    labeled_data = noise_labeling(data)
-
-    # TODO: restored_sentence 만드는 함수로 교체 필요
-    restored = pd.read_csv(os.path.join(DATA_DIR, "restored_sentences.csv"))
-    restored_data = pd.merge(labeled_data, restored[["ID", "restored"]], on="ID")
-    # TODO End
-
-    corrected_data = relabel_data(restored_data)
-    corrected_data.to_csv(os.path.join(DATA_DIR, "train_relabel_with_embedding.csv"), index=False)
-
-    noise_df = corrected_data[corrected_data["noise_label"]]
-
-    final_data = corrected_data[["ID", "text", "target"]]
-
-    final_data.loc[noise_df.index, "text"] = noise_df["restored"]
-    final_data.loc[:, "target"] = corrected_data["new_target"]
-
-    main(final_data, do_predict=args.do_predict)
