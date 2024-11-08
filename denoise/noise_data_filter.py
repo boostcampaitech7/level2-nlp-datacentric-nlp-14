@@ -45,17 +45,10 @@ def noise_labeling(data: pd.DataFrame):
 
 
 if __name__ == "__main__":
-    train_df = pd.DataFrame(
-        {
-            "text": [
-                "정i :파1 미사z KT( 이용기간 2e 단] Q분종U2보",
-                "K찰.국DLwo 로L3한N% 회장 2 T0&}송=",
-                '"m 김정) 자주통일 새,?r열1나가야1보"',
-                "갤노트8 주말 27만대 개통…시장은 불법 보조금 얼룩",
-                "pI美대선I앞두고 R2fr단 발] $비해 감시 강화",
-            ],
-        }
-    )
+    import os
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    train_df = pd.read_csv(os.path.join(script_dir, "..", "examples", "noise_text_example.csv"))
     noise_label_data = noise_labeling(train_df)
 
     print(noise_label_data.head())

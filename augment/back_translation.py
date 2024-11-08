@@ -53,24 +53,11 @@ def back_translate(data: pd.DataFrame) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    data = pd.DataFrame(
-        {
-            "text": [
-                "갤노트8 주말 27만대 개통…시장은 불법 보조금 얼룩",
-                "美성인 6명 중 1명꼴 배우자·연인 빚 떠안은 적 있다",
-                "아가메즈 33득점 우리카드 KB손해보험 완파…3위 굳...",
-                "朴대통령 얼마나 많이 놀라셨어요…경주 지진현장 방문종합",
-                "듀얼심 아이폰 하반기 출시설 솔솔…알뜰폰 기대감",
-                "NH투자 1월 옵션 만기일 매도 우세",
-                "황총리 각 부처 비상대비태세 철저히 강구해야",
-                "게시판 KISA 박민정 책임연구원 APTLD 이사 선출",
-                "공사업체 협박에 분쟁해결 명목 돈 받은 언론인 집행유예",
-                "월세 전환에 늘어나는 주거비 부담…작년 역대 최고치",
-                "페이스북 인터넷 드론 아퀼라 실물 첫 시험비행 성공",
-                "추신수 타율 0.265로 시즌 마감…최지만은 19홈런·6...",
-            ],
-        }
-    )
+    import os
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    data = pd.read_csv(os.path.join(script_dir, "..", "examples", "normal_text_example.csv"))
+
     back_translated_data = back_translate(data)
     print("Back Translated Test")
     print("===================Back Translated Test===================")

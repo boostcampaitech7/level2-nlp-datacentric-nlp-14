@@ -134,60 +134,11 @@ def generate_restored_sentences(
 
 
 if __name__ == "__main__":
-    data = pd.DataFrame(
-        {
-            "text": [
-                "정i :파1 미사z KT( 이용기간 2e 단] Q분종U2보",
-                "K찰.국DLwo 로L3한N% 회장 2 T0&}송=",
-                '"m 김정) 자주통일 새,?r열1나가야1보"',
-                "갤노트8 주말 27만대 개통…시장은 불법 보조금 얼룩",
-                "pI美대선I앞두고 R2fr단 발] $비해 감시 강화",
-                "美성인 6명 중 1명꼴 배우자·연인 빚 떠안은 적 있다",
-                "프로야구~롯TKIAs광주 경기 y천취소",
-                "아가메즈 33득점 우리카드 KB손해보험 완파…3위 굳...",
-                "朴대통령 얼마나 많이 놀라셨어요…경주 지진현장 방문종합",
-                "듀얼심 아이폰 하반기 출시설 솔솔…알뜰폰 기대감",
-                "oi 매력 R모h츠a열#w3약 >l·주가 고Q/진",
-                "NH투자 1월 옵션 만기일 매도 우세",
-                "황총리 각 부처 비상대비태세 철저히 강구해야",
-                "아이`XSI수리0* b대`…맥3 디dF레< 41/'",
-                '"문/인 당2 4nS 민관2동7사위 /""X보 철거tt"',
-                "게시판 KISA 박민정 책임연구원 APTLD 이사 선출",
-                "공사업체 협박에 분쟁해결 명목 돈 받은 언론인 집행유예",
-                "월세 전환에 늘어나는 주거비 부담…작년 역대 최고치",
-                "개R전 연w정연H 작가",
-                "페이스북 인터넷 드론 아퀼라 실물 첫 시험비행 성공",
-                "추신수 타율 0.265로 시즌 마감…최지만은 19홈런·6...",
-                "KIA I수단·팬nI께하는:호kQ4M족 한마5 S최",
-                "현N차sJ <e 임원6늘려…~세z 리g (보j 육y",
-            ],
-            "noise_label": [
-                True,
-                True,
-                True,
-                False,
-                True,
-                False,
-                True,
-                False,
-                False,
-                False,
-                True,
-                False,
-                False,
-                True,
-                True,
-                False,
-                False,
-                False,
-                True,
-                False,
-                False,
-                True,
-                True,
-            ],
-        }
-    )
+    import os
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    data = pd.read_csv(os.path.join(script_dir, "..", "examples", "noise_labeled_text_example.csv"))
+
     restored_data = restore_noise(data)
     print("==================================================")
     for i, row in restored_data.iterrows():
