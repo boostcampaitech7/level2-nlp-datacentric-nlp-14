@@ -104,7 +104,7 @@ def train_classifier(
 
 
 def get_train_data(clean_data, origin):
-    noise_data = origin[origin["noise_label"] == True]
+    noise_data = origin[origin["noise_label"]]
 
     # 1. 노이즈 데이터의 text는 restored 데이터로 대체
     origin.loc[noise_data.index, "text"] = noise_data["restored"]
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     # 모델 학습
     model = train_classifier(model, tokenizer, train_texts, train_labels)
 
-    not_noise = restored_with_filtered[restored_with_filtered["noise_label"] == False]
+    not_noise = restored_with_filtered[~restored_with_filtered["noise_label"]]
     to_classify = not_noise["restored"].tolist()
 
     # re-labeling
