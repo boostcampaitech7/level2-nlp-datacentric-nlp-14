@@ -13,26 +13,21 @@ from utils import set_seed
 
 class CustomDataset(torch.utils.data.Dataset):
     def __init__(self, texts, labels, tokenizer, max_length=128):
-        self.texts = texts
         self.labels = labels
         self.tokenizer = tokenizer
         self.max_length = max_length
+        self.tokenized_texts = [
+            tokenizer(text, padding="max_length", truncation=True, max_length=max_length, return_tensors="pt")
+            for text in texts
+        ]
 
     def __len__(self):
-        return len(self.texts)
+        return len(self.tokenized_texts)
 
     def __getitem__(self, idx):
-        text = self.texts[idx]
+        inputs = self.tokenized_texts[idx]
         label = self.labels[idx]
-        # 텍스트를 토큰화하고, PyTorch 텐서 형식으로 반환
-        inputs = self.tokenizer(
-            text, padding="max_length", truncation=True, max_length=self.max_length, return_tensors="pt"
-        )
-
-        # Trainer가 요구하는 형식으로 딕셔너리 생성
-        item = {key: val.squeeze(0) for key, val in inputs.items()}  # input_ids와 attention_mask
-        item["labels"] = torch.tensor(label, dtype=torch.long)  # 레이블 추가
-        return item
+        return inputs, label
 
 
 def train_classifier(
