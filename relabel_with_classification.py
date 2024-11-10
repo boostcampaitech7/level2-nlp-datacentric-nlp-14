@@ -1,7 +1,5 @@
 import argparse
-import random
 
-import numpy as np
 import pandas as pd
 import torch
 from transformers import PretrainedModelForSequenceClassification, PretrainedTokenizer, Trainer, TrainingArguments
