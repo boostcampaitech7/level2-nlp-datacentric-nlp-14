@@ -23,7 +23,7 @@ Data-Centric NLP Project는 한국어 뉴스 헤드라인을 7가지 주제로 �
 2. **라벨 에러 탐지 및 re-labeling**: 잘못된 라벨을 찾아내어 정확한 라벨로 수정
 3. **데이터 증강**: 데이터의 다양성을 높여 모델 학습에 도움을 줌
 
-## Installation
+## Getting Started
 
 **Requirement**: Python 3.10
 
@@ -50,7 +50,7 @@ $ pipenv shell
 (level2-nlp-datacentric-nlp-14)$
 ```
 
-## Data
+### 3. Set Up Data
 
 `data/` 폴더 내에 데이터들을 위치시킵니다.
 
@@ -59,6 +59,14 @@ $ pipenv shell
 - `train.csv`
 
 `test.csv`에 대한 추론은 `data/` 내에 `output.csv`로 저장됩니다.
+
+### 4. Run the Project
+
+다음 명령어를 통해 프로젝트를 실행합니다.
+
+```bash
+$ python main.py
+```
 
 ## Collaborators
 
