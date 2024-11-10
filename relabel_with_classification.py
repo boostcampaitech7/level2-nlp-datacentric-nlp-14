@@ -4,29 +4,11 @@ import random
 import numpy as np
 import pandas as pd
 import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments
+from transformers import PretrainedModelForSequenceClassification, PretrainedTokenizer, Trainer, TrainingArguments
 
 from configs import DEVICE
 from main import main
 from utils import set_seed
-
-
-def get_sentence_label(model: AutoModelForSequenceClassification, tokenizer: AutoTokenizer, sentences: list[str]):
-    # Tokenize sentences
-    inputs = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt").to(DEVICE)
-
-    # Classify sentence labels
-    with torch.no_grad():
-        outputs = model(**inputs)
-        logits = outputs.logits
-
-    # Predict label
-    if len(sentences) == 1:
-        predicted_class = logits.argmax(dim=1).item()  # 한 문장일 경우 단일 값 반환
-    else:
-        predicted_class = logits.argmax(dim=1).tolist()
-
-    return predicted_class
 
 
 class CustomDataset(torch.utils.data.Dataset):
@@ -103,6 +85,26 @@ def train_classifier(
     return model
 
 
+def get_sentence_label(
+    model: PretrainedModelForSequenceClassification, tokenizer: PretrainedTokenizer, sentences: list[str]
+):
+    # Tokenize sentences
+    inputs = tokenizer(sentences, padding=True, truncation=True, return_tensors="pt").to(DEVICE)
+
+    # Classify sentence labels
+    with torch.no_grad():
+        outputs = model(**inputs)
+        logits = outputs.logits
+
+    # Predict label
+    if len(sentences) == 1:
+        predicted_class = logits.argmax(dim=1).item()  # 한 문장일 경우 단일 값 반환
+    else:
+        predicted_class = logits.argmax(dim=1).tolist()
+
+    return predicted_class
+
+
 def get_train_data(clean_data, origin):
     noise_data = origin[origin["noise_label"]]
 
@@ -148,8 +150,8 @@ if __name__ == "__main__":
     train_labels = noise_data["target"].tolist()
 
     model_name = "jhgan/ko-sroberta-multitask"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=7).to(DEVICE)
+    tokenizer = PretrainedTokenizer.from_pretrained(model_name)
+    model = PretrainedModelForSequenceClassification.from_pretrained(model_name, num_labels=7).to(DEVICE)
 
     # 모델 학습
     model = train_classifier(model, tokenizer, train_texts, train_labels)
