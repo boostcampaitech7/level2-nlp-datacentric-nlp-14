@@ -4,7 +4,8 @@
 
 ### 개요
 
-Data-Centric NLP Project는 한국어 뉴스 헤드라인을 7가지 주제로 분류하는 작업에서, **모델 코드 수정 없이 데이터만을 개선하여** 성능을 향상시키는 것을 목표로 한다. 노이즈와 라벨 오류가 포함된 데이터를 정제하고 증강하여 분류 정확도를 높인다.
+한국어 뉴스 헤드라인을 7가지 주제로 분류하는 프로젝트입니다. <br/>
+**모델에 대한 수정 없이 데이터만을 개선하여** 성능을 향상시켜야 합니다.
 
 ### 데이터셋
 
@@ -14,14 +15,13 @@ Data-Centric NLP Project는 한국어 뉴스 헤드라인을 7가지 주제로 �
 | 노이즈 데이터    | 1,600개 | 노이즈가 추가된 데이터    |
 | 정상 데이터      | 200개   | 정상 데이터               |
 
-- 노이즈 데이터는 라벨이 정확하지만, 문장의 20~80%가 무작위 ASCII 코드로 대체됨
-- 라벨 에러 데이터는 노이즈는 없지만, 잘못된 라벨이 지정됨
+> 라벨 에러 데이터에는 노이즈가 없고, 노이즈 데이터는 라벨이 정상입니다.
 
 ### 주요 접근법
 
-1. **노이즈 탐지 및 복구**: 데이터에 포함된 노이즈를 식별하고 이를 개선
-2. **라벨 에러 탐지 및 re-labeling**: 잘못된 라벨을 찾아내어 정확한 라벨로 수정
-3. **데이터 증강**: 데이터의 다양성을 높여 모델 학습에 도움을 줌
+- 노이즈 탐지 및 복구
+- 라벨 에러 탐지 및 수정
+- 데이터 증강
 
 ## Getting Started
 
@@ -90,7 +90,7 @@ level2-nlp-datacentric-nlp-14
 
 ## Workflow
 
-`main.py` 내부에서 순차적으로 실행되는 과정을 설명합니다.
+`main.py` 실행 과정
 
 ### 1. Load Data
 
@@ -183,4 +183,3 @@ def main(data: pd.DataFrame, do_predict: bool = True):
 | <img src="https://github.com/kimhyeonseo0830.png" width="100"> | <img src="https://github.com/eyeol.png" width="100"> | <img src="https://github.com/jagaldol.png" width="100"> | <img src="https://github.com/So1pi.png" width="100"> | <img src="https://github.com/DDUKDAE.png" width="100"> |
 
 </div>
-```
