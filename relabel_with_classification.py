@@ -80,8 +80,6 @@ def train_classifier(
         metric_for_best_model="accuracy",
     )
 
-    # 평가 지표 정의 (예: 정확도)
-
     def compute_metrics(eval_pred):
         logits, labels = eval_pred
         predictions = logits.argmax(axis=-1)
@@ -105,6 +103,27 @@ def train_classifier(
     return model
 
 
+def get_train_data(clean_data, origin):
+    noise_data = origin[origin["noise_label"] == True]
+
+    # 1. 노이즈 데이터의 text는 restored 데이터로 대체
+    origin.loc[noise_data.index, "text"] = noise_data["restored"]
+
+    # 2. 노이즈 없는 데이터의 target은 re-labeling한 값으로 대체
+    clean_data_target = clean_data[["ID", "target"]]
+
+    # origin과 clean_data_target을 ID를 기준으로 병합하여, origin에 target_new가 추가됨
+    origin = origin.merge(clean_data_target, on="ID", how="left", suffixes=("", "_new"))
+
+    # origin의 target 값을 새로 병합된 target_new 값으로 업데이트
+    origin["target"] = origin["target_new"].combine_first(origin["target"]).astype(int)
+
+    # 3. train data 구성 완료
+    train_data = origin[["ID", "text", "target"]]
+
+    return train_data
+
+
 if __name__ == "__main__":
 
     my_seed = 42  # 원하는 seed 값 설정
@@ -115,6 +134,7 @@ if __name__ == "__main__":
     parser.add_argument("--do-predict", action="store_true")
     args = parser.parse_args()
 
+    # 편의상 restored에 noise_ratio, noise_label이 추가된 csv를 바로 불러옵니다
     restored_with_filtered = pd.read_csv("data/restored_with_filtered.csv")
 
     noise_data = restored_with_filtered[
@@ -137,24 +157,12 @@ if __name__ == "__main__":
     not_noise = restored_with_filtered[restored_with_filtered["noise_label"] == False]
     to_classify = not_noise["restored"].tolist()
 
-    # re labeling
+    # re-labeling
     classified_labels = get_sentence_label(model, tokenizer, to_classify)
     not_noise["target"] = classified_labels
 
-    noise_data = restored_with_filtered[restored_with_filtered["noise_label"] == True]
-    restored_with_filtered.loc[noise_data.index, "text"] = noise_data["restored"]
-
-    not_noise_target = not_noise[["ID", "target"]]
-
-    # df_final과 not_noise_target을 ID를 기준으로 병합하여 target 값 업데이트
-    restored_with_filtered = restored_with_filtered.merge(not_noise_target, on="ID", how="left", suffixes=("", "_new"))
-
-    # 덮어쓰기를 위해 df_final의 target 값을 새로 병합된 target 값으로 업데이트
-    restored_with_filtered["target"] = (
-        restored_with_filtered["target_new"].combine_first(restored_with_filtered["target"]).astype(int)
-    )
-
-    restored_with_filtered = restored_with_filtered[["ID", "text", "target"]]
+    # 최종 train 데이터셋 구성
+    train_data = get_train_data(clean_data=not_noise, origin=restored_with_filtered)
 
     set_seed()
-    main(restored_with_filtered)
+    main(train_data)
