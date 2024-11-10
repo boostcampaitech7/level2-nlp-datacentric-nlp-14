@@ -33,3 +33,15 @@ $ pipenv shell
 - `train.csv`
 
 `test.csv`에 대한 추론은 `data/` 내에 `output.csv`로 저장됩니다.
+
+## Collaborators
+
+<h3 align="center">NLP-14조 Word Maestro(s)</h3>
+
+<div align="center">
+
+|          [김현서](https://github.com/kimhyeonseo0830)          |          [단이열](https://github.com/eyeol)          |          [안혜준](https://github.com/jagaldol)          |          [이재룡](https://github.com/So1pi)          |          [장요한](https://github.com/DDUKDAE)          |
+| :------------------------------------------------------------: | :--------------------------------------------------: | :-----------------------------------------------------: | :--------------------------------------------------: | :----------------------------------------------------: |
+| <img src="https://github.com/kimhyeonseo0830.png" width="100"> | <img src="https://github.com/eyeol.png" width="100"> | <img src="https://github.com/jagaldol.png" width="100"> | <img src="https://github.com/So1pi.png" width="100"> | <img src="https://github.com/DDUKDAE.png" width="100"> |
+
+</div>
