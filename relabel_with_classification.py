@@ -120,9 +120,7 @@ def get_train_data(clean_data, origin):
 
 if __name__ == "__main__":
 
-    my_seed = 42  # 원하는 seed 값 설정
-    random.seed(my_seed)
-    np.random.seed(my_seed)
+    set_seed()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--do-predict", action="store_true")
@@ -158,5 +156,4 @@ if __name__ == "__main__":
     # 최종 train 데이터셋 구성
     train_data = get_train_data(clean_data=not_noise, origin=restored_with_filtered)
 
-    set_seed()
     main(train_data)
