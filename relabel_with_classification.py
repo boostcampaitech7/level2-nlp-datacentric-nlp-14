@@ -98,11 +98,8 @@ def get_sentence_label(
 
     # Predict label
     if len(sentences) == 1:
-        predicted_class = logits.argmax(dim=1).item()  # 한 문장일 경우 단일 값 반환
-    else:
-        predicted_class = logits.argmax(dim=1).tolist()
-
-    return predicted_class
+        return logits.argmax(dim=1).item()  # 한 문장일 경우 단일 값 반환
+    return logits.argmax(dim=1).tolist()
 
 
 def get_train_data(clean_data, origin):
