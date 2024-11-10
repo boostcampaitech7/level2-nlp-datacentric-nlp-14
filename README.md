@@ -68,6 +68,26 @@ $ pipenv shell
 $ python main.py
 ```
 
+## Project Structure
+
+```plaintext
+level2-nlp-datacentric-nlp-14
+├── augment
+│   └── back_translate.py         # 역번역을 통한 데이터 증강
+├── configs
+│   └── config.py                 # 프로젝트 설정 파일
+├── denoise
+│   ├── noise_data_filter.py      # 형태소 분석기를 이용한 노이즈 필터
+│   └── restore_noise_data.py     # LLM을 활용한 노이즈 문장 복원
+├── relabel
+│   ├── relabel_with_embedding.py       # 임베딩을 사용한 re-labeling
+│   ├── relabel_with_llm.py             # LLM을 이용한 re-labeling
+│   └── train_contrastive_embedding.py  # 대조 학습을 통한 임베딩 학습
+├── utils
+│   └── util.py
+└── main.py                       # 메인 실행 파일
+```
+
 ## Collaborators
 
 <h3 align="center">NLP-14조 Word Maestro(s)</h3>
