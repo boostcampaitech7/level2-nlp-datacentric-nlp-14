@@ -1,6 +1,7 @@
 data/
 output/
 results/
+*.csv
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
