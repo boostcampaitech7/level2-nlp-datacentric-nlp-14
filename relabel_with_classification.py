@@ -76,9 +76,6 @@ def train_classifier(
     # 학습 시작
     trainer.train()
 
-    # 학습이 완료된 모델 반환
-    return model
-
 
 def get_sentence_label(
     model: PretrainedModelForSequenceClassification, tokenizer: PretrainedTokenizer, sentences: list[str]
@@ -144,7 +141,7 @@ if __name__ == "__main__":
     model = PretrainedModelForSequenceClassification.from_pretrained(model_name, num_labels=7).to(DEVICE)
 
     # 모델 학습
-    model = train_classifier(model, tokenizer, train_texts, train_labels)
+    train_classifier(model, tokenizer, train_texts, train_labels)
 
     not_noise = restored_with_filtered[~restored_with_filtered["noise_label"]]
     to_classify = not_noise["restored"].tolist()
