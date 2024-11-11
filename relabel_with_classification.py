@@ -2,7 +2,14 @@ import argparse
 
 import pandas as pd
 import torch
-from transformers import PretrainedModelForSequenceClassification, PretrainedTokenizer, Trainer, TrainingArguments
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    PretrainedModelForSequenceClassification,
+    PretrainedTokenizer,
+    Trainer,
+    TrainingArguments,
+)
 
 from configs import DEVICE
 from main import main
@@ -135,8 +142,8 @@ if __name__ == "__main__":
     train_labels = noise_data["target"].tolist()
 
     model_name = "jhgan/ko-sroberta-multitask"
-    tokenizer = PretrainedTokenizer.from_pretrained(model_name)
-    model = PretrainedModelForSequenceClassification.from_pretrained(model_name, num_labels=7).to(DEVICE)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=7).to(DEVICE)
 
     # 모델 학습
     train_classifier(model, tokenizer, train_texts, train_labels)
