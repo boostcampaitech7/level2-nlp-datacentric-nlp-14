@@ -156,7 +156,7 @@ main(augmented_data, do_predict=not args.train_only)
 
 <br/>
 
-학습 및 예측에 사용되는 모델은 `klue/ber-base`로 고정됩니다.
+학습 및 예측에 사용되는 모델은 `klue/bert-base`로 고정됩니다.
 
 ```python
 def main(data: pd.DataFrame, do_predict: bool = True):
